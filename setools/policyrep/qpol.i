@@ -134,6 +134,18 @@ def QpolGenerator(cast):
             @QpolGenerator(_qpol.qpol_type_from_void)
     """
 
+    if cast == _qpol.qpol_avrule_from_void:
+        def decorate(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                qpol_iter = func(*args)
+                while not qpol_iter.isend():
+                    yield qpol_iter.avrule_item()
+                    qpol_iter.next_()
+
+            return wrapper
+        return decorate
+
     def decorate(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -1148,6 +1160,15 @@ typedef struct qpol_iterator {} qpol_iterator_t;
     void *item() {
         void *i;
         if (qpol_iterator_get_item(self, &i)) {
+            SWIG_exception(SWIG_RuntimeError, "Could not get item");
+        }
+        return i;
+    fail:
+        return NULL;
+    };
+    qpol_avrule_t *avrule_item() {
+        qpol_avrule_t *i;
+        if (qpol_iterator_get_item(self, (void **)&i)) {
             SWIG_exception(SWIG_RuntimeError, "Could not get item");
         }
         return i;
